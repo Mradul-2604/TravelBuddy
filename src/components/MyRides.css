@@ -1,0 +1,270 @@
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 2rem;
+  color: var(--text-light);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header-left h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--text-light);
+}
+
+.offer-ride-btn {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.offer-ride-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.rides-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  color: var(--text-gray);
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.tab-button.active {
+  color: var(--text-light);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.rides-section {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.rides-section h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-light);
+}
+
+.section-subtitle {
+  color: var(--text-gray);
+  margin-bottom: 1.5rem;
+}
+
+.no-rides {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-gray);
+}
+
+.find-ride-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.find-ride-link:hover {
+  text-decoration: underline;
+}
+
+.rides-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.ride-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.ride-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.ride-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-light);
+}
+
+.ride-date, .ride-details, .ride-vehicle, .ride-driver {
+  margin: 0.25rem 0;
+  color: var(--text-gray);
+}
+
+.ride-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background-color: rgba(0, 200, 83, 0.1);
+  color: #00c853;
+}
+
+.status-badge.completed {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.status-badge.cancelled {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-btn, .cancel-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  transition: background-color 0.3s;
+}
+
+.edit-btn {
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.edit-btn:hover {
+  background-color: rgba(33, 150, 243, 0.2);
+}
+
+.cancel-btn {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.cancel-btn:hover {
+  background-color: rgba(244, 67, 54, 0.2);
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-popup, .edit-popup {
+  background-color: var(--bg-dark);
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.confirmation-popup h3, .edit-popup h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-light);
+}
+
+.popup-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.confirm-btn, .save-btn {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+}
+
+.confirm-btn:hover, .save-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.success-message {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background-color: rgba(0, 200, 83, 0.1);
+  color: #00c853;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: var(--text-gray);
+}
+
+.error {
+  color: #f44336;
+  text-align: center;
+  padding: 2rem;
+} 
