@@ -24,13 +24,22 @@ router.post('/create', auth, async (req, res) => {
 // Get all active rides
 router.get('/available', auth, async (req, res) => {
   try {
-    const rides = await Ride.find({ 
+    const rides = await Ride.find({
       status: 'active',
       date: { $gte: new Date() },
-      driver: { $ne: req.user.id }
+      driver: { $ne: req.user.id },
+      // GUARD: exclude rides the user has already requested (pending or accepted)
+      'requests': {
+        $not: {
+          $elemMatch: {
+            passenger: req.user.id,
+            status: { $in: ['pending', 'accepted'] }
+          }
+        }
+      }
     })
-    .populate('driver', 'name')
-    .sort({ date: 1 });
+      .populate('driver', 'name')
+      .sort({ date: 1 });
     res.json(rides);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -41,23 +50,23 @@ router.get('/available', auth, async (req, res) => {
 router.get('/my-rides', auth, async (req, res) => {
   try {
     // Get rides where the user is the driver and status is not cancelled
-    const offeredRides = await Ride.find({ 
+    const offeredRides = await Ride.find({
       driver: req.user.id,
       status: { $ne: 'cancelled' }
     })
-    .populate('driver', 'name')
-    .populate('requests.passenger', 'name email')
-    .populate('acceptedPassengers', 'name email')
-    .sort({ date: -1 });
+      .populate('driver', 'name')
+      .populate('requests.passenger', 'name email')
+      .populate('acceptedPassengers', 'name email')
+      .sort({ date: -1 });
 
     // Get rides where the user is an accepted passenger and status is not cancelled
     const bookedRides = await Ride.find({
       'acceptedPassengers': req.user.id,
       status: { $ne: 'cancelled' }
     })
-    .populate('driver', 'name')
-    .populate('acceptedPassengers', 'name email')
-    .sort({ date: -1 });
+      .populate('driver', 'name')
+      .populate('acceptedPassengers', 'name email')
+      .sort({ date: -1 });
 
     res.json({
       offered: offeredRides,
@@ -72,7 +81,7 @@ router.get('/my-rides', auth, async (req, res) => {
 router.post('/:rideId/request', auth, async (req, res) => {
   try {
     const ride = await Ride.findById(req.params.rideId).populate('driver');
-    
+
     if (!ride) {
       return res.status(404).json({ message: 'Ride not found' });
     }
@@ -80,6 +89,14 @@ router.post('/:rideId/request', auth, async (req, res) => {
     // Check if there are available seats
     if (ride.availableSeats <= 0) {
       return res.status(400).json({ message: 'No seats available' });
+    }
+
+    // GUARD: prevent duplicate requests from the same passenger
+    const existingRequest = ride.requests.find(
+      r => r.passenger.toString() === req.user.id && (r.status === 'pending' || r.status === 'accepted')
+    );
+    if (existingRequest) {
+      return res.status(400).json({ message: 'You have already requested this ride' });
     }
 
     // Add the request
@@ -113,11 +130,11 @@ router.post('/:rideId/requests/:requestId/accept', auth, async (req, res) => {
   try {
     console.log("Step 1: Request received - Ride ID:", req.params.rideId, "Request ID:", req.params.requestId);
     console.log("User ID:", req.user.id);
-    
+
     const ride = await Ride.findById(req.params.rideId)
       .populate('driver', 'name')
       .populate('requests.passenger', 'name email');
-   
+
     console.log("Step 2: Ride data:", ride);
     if (!ride) {
       console.log("Error: Ride not found");
@@ -141,9 +158,10 @@ router.post('/:rideId/requests/:requestId/accept', auth, async (req, res) => {
     }
 
     console.log("Step 5: Checking request status");
-    if (request.status === 'accepted') {
-      console.log("Error: Request already accepted");
-      return res.status(400).json({ message: 'Request is already accepted' });
+    // GUARD: only pending requests can be accepted (idempotent — blocks re-accept and accept-after-reject)
+    if (request.status !== 'pending') {
+      console.log("Error: Request already processed, status:", request.status);
+      return res.status(400).json({ message: `Request is already ${request.status}` });
     }
 
     console.log("Step 6: Checking seat availability");
@@ -156,7 +174,7 @@ router.post('/:rideId/requests/:requestId/accept', auth, async (req, res) => {
     console.log("Step 7: Updating request status");
     request.status = 'accepted';
     ride.availableSeats -= 1;
-    
+
     console.log("Step 8: Updating accepted passengers");
     if (!ride.acceptedPassengers.includes(request.passenger._id)) {
       ride.acceptedPassengers.push(request.passenger._id);
@@ -178,7 +196,7 @@ router.post('/:rideId/requests/:requestId/accept', auth, async (req, res) => {
     await notification.save();
     console.log("Notification saved successfully");
 
-    res.json({ 
+    res.json({
       message: 'Ride request accepted successfully',
       ride: {
         _id: updatedRide._id,
@@ -207,7 +225,7 @@ router.post('/:rideId/requests/:requestId/reject', auth, async (req, res) => {
     const ride = await Ride.findById(req.params.rideId)
       .populate('driver', 'name')
       .populate('requests.passenger', 'name email');
-    
+
     console.log("Ride data:", ride);
     if (!ride) {
       return res.status(404).json({ message: 'Ride not found' });
@@ -234,7 +252,7 @@ router.post('/:rideId/requests/:requestId/reject', auth, async (req, res) => {
 
     console.log("Step 5: Updating request status");
     request.status = 'rejected';
-    
+
     console.log("Step 6: Saving ride");
     const updatedRide = await ride.save();
     console.log("Ride updated successfully:", updatedRide);
@@ -251,7 +269,7 @@ router.post('/:rideId/requests/:requestId/reject', auth, async (req, res) => {
     await notification.save();
     console.log("Notification saved successfully");
 
-    res.json({ 
+    res.json({
       message: 'Ride request rejected successfully',
       ride: {
         _id: updatedRide._id,
@@ -277,7 +295,7 @@ router.post('/:rideId/requests/:requestId/reject', auth, async (req, res) => {
 router.patch('/:rideId/cancel', auth, async (req, res) => {
   try {
     const ride = await Ride.findById(req.params.rideId);
-    
+
     if (!ride) {
       return res.status(404).json({ message: 'Ride not found' });
     }
@@ -306,7 +324,7 @@ router.patch('/:rideId/cancel', auth, async (req, res) => {
 router.patch('/:rideId', auth, async (req, res) => {
   try {
     const ride = await Ride.findById(req.params.rideId);
-    
+
     if (!ride) {
       return res.status(404).json({ message: 'Ride not found' });
     }
@@ -348,17 +366,17 @@ router.get('/requests', auth, async (req, res) => {
       driver: req.user.id,
       'requests.status': 'pending'
     })
-    .populate('driver', 'name')
-    .populate('requests.passenger', 'name email')
-    .sort({ date: 1 });
+      .populate('driver', 'name')
+      .populate('requests.passenger', 'name email')
+      .sort({ date: 1 });
 
     // Get rides where the current user has sent requests
     const sentRequests = await Ride.find({
       'requests.passenger': req.user.id
     })
-    .populate('driver', 'name')
-    .populate('requests.passenger', 'name email')
-    .sort({ date: 1 });
+      .populate('driver', 'name')
+      .populate('requests.passenger', 'name email')
+      .sort({ date: 1 });
 
     // Filter to only show the most recent request for each ride
     const filteredSentRequests = sentRequests.map(ride => {
@@ -383,4 +401,4 @@ router.get('/requests', auth, async (req, res) => {
 
 router.get('/stats', rideController.getRideStats);
 
-module.exports = router; 
+module.exports = router;
